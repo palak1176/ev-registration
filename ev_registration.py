@@ -37,13 +37,18 @@ def ev_registration(file_path):
         print(f"Warning: The following counties are missing from the data: {missing_counties}")
     ev_registration_df = ev_registration_df[ev_registration_df['county'].str.lower().isin(atlanta_msa_counties_lower)]
 
-    ev_registration_df['light_duty_vehicles'] = round(ev_registration_df['ev'] * 0.9003273533, 0).astype(int) 
+    ev_registration_df['light_duty_evs'] = round(ev_registration_df['ev'] * 0.9167054444, 0).astype(int) 
     # 90.03% of EVs are light-duty on average, based on Georgia state data from 2022-2026 from Atlas Public Policy
+    ev_registration_df['medium_duty_evs'] = round(ev_registration_df['ev'] * 0.0822087793, 0).astype(int)
+    ev_registration_df['heavy_duty_evs'] = round(ev_registration_df['ev'] * 0.0010857763, 0).astype(int) 
 
-    print(f"\nTotal light-duty EVs in Atlanta MSA: {ev_registration_df['light_duty_vehicles'].sum():,.0f}")
+    print(f"\nTotal light-duty EVs in Atlanta MSA: {ev_registration_df['light_duty_evs'].sum():,.0f}")
+    print(f"Total medium-duty EVs in Atlanta MSA: {ev_registration_df['medium_duty_evs'].sum():,.0f}")
+    print(f"Total heavy-duty EVs in Atlanta MSA: {ev_registration_df['heavy_duty_evs'].sum():,.0f}")
+    print(f"Total EVs in Atlanta MSA: {ev_registration_df['ev'].sum():,.0f}")
     print(f"Total vehicles in Atlanta MSA: {ev_registration_df['total_vehicle'].sum():,.0f}")
-    print(f"Percentage of light-duty EVs in Atlanta MSA: {ev_registration_df['light_duty_vehicles'].sum() / ev_registration_df['total_vehicle'].sum() * 100:.2f}%\n")
+    print(f"Percentage of light-duty EVs in Atlanta MSA: {ev_registration_df['light_duty_evs'].sum() / ev_registration_df['total_vehicle'].sum() * 100:.2f}%\n")
 
     return ev_registration_df
 
-print(ev_registration("registered_vehicles_by_county_04-2024.csv"))
+print(ev_registration("registered_vehicles_by_county_03-2026.csv"))
