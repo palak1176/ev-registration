@@ -37,8 +37,9 @@ def ev_registration(file_path):
         print(f"Warning: The following counties are missing from the data: {missing_counties}")
     ev_registration_df = ev_registration_df[ev_registration_df['county'].str.lower().isin(atlanta_msa_counties_lower)]
 
-    ev_registration_df['light_duty_evs'] = round(ev_registration_df['ev'] * 0.9690835613, 0).astype(int) 
-    # 90.03% of EVs are light-duty on average, based on Georgia state data from 2022-2026 from Atlas Public Policy
+    # Calculate light-duty, medium-duty, and heavy-duty EVs based on the provided percentages
+    # Default ratios are 2022 ratios but input correct annual averages from Atlas Public Policy Analysis (2026 ratios for 2026 data, etc.)
+    ev_registration_df['light_duty_evs'] = round(ev_registration_df['ev'] * 0.9690835613, 0).astype(int)
     ev_registration_df['medium_duty_evs'] = round(ev_registration_df['ev'] * 0.0309164387, 0).astype(int)
     ev_registration_df['heavy_duty_evs'] = round(ev_registration_df['ev'] * 0.0000000000, 0).astype(int) 
 
@@ -49,6 +50,6 @@ def ev_registration(file_path):
     print(f"Total vehicles in Atlanta MSA: {ev_registration_df['total_vehicle'].sum():,.0f}")
     print(f"Percentage of light-duty EVs in Atlanta MSA: {ev_registration_df['light_duty_evs'].sum() / ev_registration_df['total_vehicle'].sum() * 100:.2f}%\n")
 
-    return ev_registration_df.to_csv("ev_registration_by_county_atlanta_msa_2021.csv", index=False)
+    return ev_registration_df.to_csv("ev_registration_by_county_atlanta_msa_year.csv", index=False)
 
 print(ev_registration("registered_vehicles_by_county_2021.csv"))
