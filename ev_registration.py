@@ -7,6 +7,9 @@ atlanta_msa_counties = [
     "Spalding", "Carroll", "Dawson", "Fulton", "Jasper", "Paulding", 
     "Walton", "Cherokee", "DeKalb", "Gwinnett", "Lamar", "Pickens"]
 
+# uncomment the line below if conducting analysis for RTEP because these 9 counties are not part of the RTEP but are included in MACAP
+# atlanta_msa_counties = [county for county in atlanta_msa_counties if county not in ["Haralson", "Meriwether", "Bartow", "Heard", "Morgan", "Butts", "Jasper", "Lamar", "Pickens"]]
+
 def ev_registration(file_path):
     # Reads CSV file
     try:
