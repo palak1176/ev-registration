@@ -10,6 +10,9 @@ atlanta_msa_counties = [
 # uncomment the line below if conducting analysis for RTEP because these 9 counties are not part of the RTEP but are included in MACAP
 # atlanta_msa_counties = [county for county in atlanta_msa_counties if county not in ["Haralson", "Meriwether", "Bartow", "Heard", "Morgan", "Butts", "Jasper", "Lamar", "Pickens"]]
 
+# uncomment the line below if conducting analysis for 11-county core ARC region
+# atlanta_msa_counties = [county for county in atlanta_msa_counties if county in ["Cherokee", "Cobb", "Douglas", "Fulton", "Fayette", "Clayton", "Henry", "DeKalb", "Gwinnett", "Forsyth"]]
+
 def ev_registration(file_path, year):
     # Reads CSV file
     try:
