@@ -11,7 +11,7 @@ atlanta_msa_counties = [
 atlanta_msa_counties = [county for county in atlanta_msa_counties if county not in ["Haralson", "Meriwether", "Bartow", "Heard", "Morgan", "Butts", "Jasper", "Lamar", "Pickens"]]
 
 # uncomment the line below if conducting analysis for 11-county core ARC region
-# atlanta_msa_counties = [county for county in atlanta_msa_counties if county in ["Cherokee", "Cobb", "Douglas", "Fulton", "Fayette", "Clayton", "Henry", "DeKalb", "Gwinnett", "Forsyth"]]
+# atlanta_msa_counties = [county for county in atlanta_msa_counties if county in ["Cherokee", "Cobb", "Douglas", "Fulton", "Fayette", "Clayton", "Henry", "DeKalb", "Gwinnett", "Forsyth", "Rockdale"]]
 
 def ev_registration(file_path, year):
     # Reads CSV file
