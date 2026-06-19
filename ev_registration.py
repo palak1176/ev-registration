@@ -10,7 +10,7 @@ atlanta_msa_counties = [
 # uncomment the line below if conducting analysis for RTEP because these 9 counties are not part of the RTEP but are included in MACAP
 # atlanta_msa_counties = [county for county in atlanta_msa_counties if county not in ["Haralson", "Meriwether", "Bartow", "Heard", "Morgan", "Butts", "Jasper", "Lamar", "Pickens"]]
 
-def ev_registration(file_path):
+def ev_registration(file_path, year):
     # Reads CSV file
     try:
         ev_registration_df = pd.read_csv(file_path)
@@ -41,10 +41,30 @@ def ev_registration(file_path):
     ev_registration_df = ev_registration_df[ev_registration_df['county'].str.lower().isin(atlanta_msa_counties_lower)]
 
     # Calculate light-duty, medium-duty, and heavy-duty EVs based on the provided percentages
-    # Default ratios are 2022 ratios but input correct annual averages from Atlas Public Policy Analysis (2026 ratios for 2026 data, etc.)
-    ev_registration_df['light_duty_evs'] = round(ev_registration_df['ev'] * 0.9690835613, 0).astype(int)
-    ev_registration_df['medium_duty_evs'] = round(ev_registration_df['ev'] * 0.0309164387, 0).astype(int)
-    ev_registration_df['heavy_duty_evs'] = round(ev_registration_df['ev'] * 0.0000000000, 0).astype(int) 
+    if year == 2021 or year == 2022 or year == 2023:
+        ev_registration_df['light_duty_evs'] = round(ev_registration_df['ev'] * 0.9690835613, 0).astype(int)
+        ev_registration_df['medium_duty_evs'] = round(ev_registration_df['ev'] * 0.0309164387, 0).astype(int)
+        ev_registration_df['heavy_duty_evs'] = round(ev_registration_df['ev'] * 0.0000000000, 0).astype(int)
+
+    if year == 2023:
+        ev_registration_df['light_duty_evs'] = round(ev_registration_df['ev'] * 0.9194743390, 0).astype(int)
+        ev_registration_df['medium_duty_evs'] = round(ev_registration_df['ev'] * 0.0801836380, 0).astype(int)
+        ev_registration_df['heavy_duty_evs'] = round(ev_registration_df['ev'] * 0.0003420230, 0).astype(int)
+
+    if year == 2024:
+        ev_registration_df['light_duty_evs'] = round(ev_registration_df['ev'] * 0.8612182545, 0).astype(int)
+        ev_registration_df['medium_duty_evs'] = round(ev_registration_df['ev'] * 0.1359837941, 0).astype(int)
+        ev_registration_df['heavy_duty_evs'] = round(ev_registration_df['ev'] * 0.0017735712, 0).astype(int)
+
+    if year == 2025:
+        ev_registration_df['light_duty_evs'] = round(ev_registration_df['ev'] * 0.8474387356, 0).astype(int)
+        ev_registration_df['medium_duty_evs'] = round(ev_registration_df['ev'] * 0.1510654460, 0).astype(int)
+        ev_registration_df['heavy_duty_evs'] = round(ev_registration_df['ev'] * 0.0020271385, 0).astype(int)
+
+    if year == 2026:
+        ev_registration_df['light_duty_evs'] = round(ev_registration_df['ev'] * 0.9167054444, 0).astype(int)
+        ev_registration_df['medium_duty_evs'] = round(ev_registration_df['ev'] * 0.0822087793, 0).astype(int)
+        ev_registration_df['heavy_duty_evs'] = round(ev_registration_df['ev'] * 0.0010857763, 0).astype(int)
 
     print(f"\nTotal light-duty EVs in Atlanta MSA: {ev_registration_df['light_duty_evs'].sum():,.0f}")
     print(f"Total medium-duty EVs in Atlanta MSA: {ev_registration_df['medium_duty_evs'].sum():,.0f}")
@@ -55,4 +75,4 @@ def ev_registration(file_path):
 
     return ev_registration_df.to_csv("ev_registration_by_county_atlanta_msa_year.csv", index=False)
 
-print(ev_registration("registered_vehicles_by_county_2021.csv"))
+print(ev_registration("registered_vehicles_by_county_2021.csv", 2021))
