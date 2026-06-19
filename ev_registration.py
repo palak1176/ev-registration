@@ -8,7 +8,7 @@ atlanta_msa_counties = [
     "Walton", "Cherokee", "DeKalb", "Gwinnett", "Lamar", "Pickens"]
 
 # uncomment the line below if conducting analysis for RTEP because these 9 counties are not part of the RTEP but are included in MACAP
-# atlanta_msa_counties = [county for county in atlanta_msa_counties if county not in ["Haralson", "Meriwether", "Bartow", "Heard", "Morgan", "Butts", "Jasper", "Lamar", "Pickens"]]
+atlanta_msa_counties = [county for county in atlanta_msa_counties if county not in ["Haralson", "Meriwether", "Bartow", "Heard", "Morgan", "Butts", "Jasper", "Lamar", "Pickens"]]
 
 # uncomment the line below if conducting analysis for 11-county core ARC region
 # atlanta_msa_counties = [county for county in atlanta_msa_counties if county in ["Cherokee", "Cobb", "Douglas", "Fulton", "Fayette", "Clayton", "Henry", "DeKalb", "Gwinnett", "Forsyth"]]
@@ -44,7 +44,7 @@ def ev_registration(file_path, year):
     ev_registration_df = ev_registration_df[ev_registration_df['county'].str.lower().isin(atlanta_msa_counties_lower)]
 
     # Calculate light-duty, medium-duty, and heavy-duty EVs based on the provided percentages
-    if year == 2021 or year == 2022 or year == 2023:
+    if year == 2020 or year == 2021 or year == 2022:
         ev_registration_df['light_duty_evs'] = round(ev_registration_df['ev'] * 0.9690835613, 0).astype(int)
         ev_registration_df['medium_duty_evs'] = round(ev_registration_df['ev'] * 0.0309164387, 0).astype(int)
         ev_registration_df['heavy_duty_evs'] = round(ev_registration_df['ev'] * 0.0000000000, 0).astype(int)
@@ -69,6 +69,9 @@ def ev_registration(file_path, year):
         ev_registration_df['medium_duty_evs'] = round(ev_registration_df['ev'] * 0.0822087793, 0).astype(int)
         ev_registration_df['heavy_duty_evs'] = round(ev_registration_df['ev'] * 0.0010857763, 0).astype(int)
 
+    # if conducting analysis for RTEP MPO region or 11-county core ARC region, even though the print statements say 
+    # "Atlanta MSA", the numbers will reflect the RTEP MPO region or 11-county core ARC region if you uncomment the 
+    # appropriate line at the top of the script that defines the atlanta_msa_counties list
     print(f"\nTotal light-duty EVs in Atlanta MSA: {ev_registration_df['light_duty_evs'].sum():,.0f}")
     print(f"Total medium-duty EVs in Atlanta MSA: {ev_registration_df['medium_duty_evs'].sum():,.0f}")
     print(f"Total heavy-duty EVs in Atlanta MSA: {ev_registration_df['heavy_duty_evs'].sum():,.0f}")
@@ -76,6 +79,6 @@ def ev_registration(file_path, year):
     print(f"Total vehicles in Atlanta MSA: {ev_registration_df['total_vehicle'].sum():,.0f}")
     print(f"Percentage of light-duty EVs in Atlanta MSA: {ev_registration_df['light_duty_evs'].sum() / ev_registration_df['total_vehicle'].sum() * 100:.2f}%\n")
 
-    return ev_registration_df.to_csv("ev_registration_by_county_atlanta_msa_year.csv", index=False)
+    return ev_registration_df.to_csv("ev_registration_by_county_mpo_2020.csv", index=False)
 
-print(ev_registration("registered_vehicles_by_county_2021.csv", 2021))
+print(ev_registration("registered_vehicles_by_county_2020.csv", 2020))
