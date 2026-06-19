@@ -44,27 +44,27 @@ def ev_registration(file_path, year):
     ev_registration_df = ev_registration_df[ev_registration_df['county'].str.lower().isin(atlanta_msa_counties_lower)]
 
     # Calculate light-duty, medium-duty, and heavy-duty EVs based on the provided percentages
-    if year == 2020 or year == 2021 or year == 2022:
+    if year in [2020, 2021, 2022]:
         ev_registration_df['light_duty_evs'] = round(ev_registration_df['ev'] * 0.9690835613, 0).astype(int)
         ev_registration_df['medium_duty_evs'] = round(ev_registration_df['ev'] * 0.0309164387, 0).astype(int)
         ev_registration_df['heavy_duty_evs'] = round(ev_registration_df['ev'] * 0.0000000000, 0).astype(int)
 
-    if year == 2023:
+    elif year == 2023:
         ev_registration_df['light_duty_evs'] = round(ev_registration_df['ev'] * 0.9194743390, 0).astype(int)
         ev_registration_df['medium_duty_evs'] = round(ev_registration_df['ev'] * 0.0801836380, 0).astype(int)
         ev_registration_df['heavy_duty_evs'] = round(ev_registration_df['ev'] * 0.0003420230, 0).astype(int)
 
-    if year == 2024:
+    elif year == 2024:
         ev_registration_df['light_duty_evs'] = round(ev_registration_df['ev'] * 0.8612182545, 0).astype(int)
         ev_registration_df['medium_duty_evs'] = round(ev_registration_df['ev'] * 0.1359837941, 0).astype(int)
         ev_registration_df['heavy_duty_evs'] = round(ev_registration_df['ev'] * 0.0017735712, 0).astype(int)
 
-    if year == 2025:
+    elif year == 2025:
         ev_registration_df['light_duty_evs'] = round(ev_registration_df['ev'] * 0.8474387356, 0).astype(int)
         ev_registration_df['medium_duty_evs'] = round(ev_registration_df['ev'] * 0.1510654460, 0).astype(int)
         ev_registration_df['heavy_duty_evs'] = round(ev_registration_df['ev'] * 0.0020271385, 0).astype(int)
 
-    if year == 2026:
+    elif year == 2026:
         ev_registration_df['light_duty_evs'] = round(ev_registration_df['ev'] * 0.9167054444, 0).astype(int)
         ev_registration_df['medium_duty_evs'] = round(ev_registration_df['ev'] * 0.0822087793, 0).astype(int)
         ev_registration_df['heavy_duty_evs'] = round(ev_registration_df['ev'] * 0.0010857763, 0).astype(int)
@@ -79,6 +79,6 @@ def ev_registration(file_path, year):
     print(f"Total vehicles in Atlanta MSA: {ev_registration_df['total_vehicle'].sum():,.0f}")
     print(f"Percentage of light-duty EVs in Atlanta MSA: {ev_registration_df['light_duty_evs'].sum() / ev_registration_df['total_vehicle'].sum() * 100:.2f}%\n")
 
-    return ev_registration_df.to_csv("ev_registration_by_county_mpo_2020.csv", index=False)
+    return ev_registration_df.to_csv(f"ev_registration_by_county_mpo_{year}.csv", index=False)
 
-print(ev_registration("registered_vehicles_by_county_2020.csv", 2020))
+print(ev_registration("registered_vehicles_by_county_2022.csv", 2022))
