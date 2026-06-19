@@ -73,12 +73,12 @@ def ev_registration(file_path, year, region):
         ev_registration_df['medium_duty_evs'] = round(ev_registration_df['ev'] * 0.0822087793, 0).astype(int)
         ev_registration_df['heavy_duty_evs'] = round(ev_registration_df['ev'] * 0.0010857763, 0).astype(int)
 
-    print(f"\nTotal light-duty EVs in {region}: {ev_registration_df['light_duty_evs'].sum():,.0f}")
-    print(f"Total medium-duty EVs in {region}: {ev_registration_df['medium_duty_evs'].sum():,.0f}")
-    print(f"Total heavy-duty EVs in {region}: {ev_registration_df['heavy_duty_evs'].sum():,.0f}")
-    print(f"Total EVs in {region}: {ev_registration_df['ev'].sum():,.0f}")
-    print(f"Total vehicles in {region}: {ev_registration_df['total_vehicle'].sum():,.0f}")
-    print(f"Percentage of light-duty EVs in {region}: {ev_registration_df['light_duty_evs'].sum() / ev_registration_df['total_vehicle'].sum() * 100:.2f}%\n")
+    print(f"\nTotal light-duty EVs in {region} in {year}: {ev_registration_df['light_duty_evs'].sum():,.0f}")
+    print(f"Total medium-duty EVs in {region} in {year}: {ev_registration_df['medium_duty_evs'].sum():,.0f}")
+    print(f"Total heavy-duty EVs in {region} in {year}: {ev_registration_df['heavy_duty_evs'].sum():,.0f}")
+    print(f"Total EVs in {region} in {year}: {ev_registration_df['ev'].sum():,.0f}")
+    print(f"Total vehicles in {region} in {year}: {ev_registration_df['total_vehicle'].sum():,.0f}")
+    print(f"Percentage of light-duty EVs in {region} in {year}: {ev_registration_df['light_duty_evs'].sum() / ev_registration_df['total_vehicle'].sum() * 100:.2f}%\n")
 
     save_region = safe_region = region.lower().replace(" ", "_")
     return ev_registration_df.to_csv(f"ev_registration_by_county_{save_region}_{year}.csv", index=False)
@@ -87,4 +87,4 @@ def ev_registration(file_path, year, region):
 # file_path: string, path to the CSV file containing EV registration data
 # year: integer, the year for which to calculate EV registrations (e.g., 2025)
 # region: string, the region for which to calculate EV registrations ("Atlanta MSA", "Atlanta MPO", or "ARC Core")
-print(ev_registration("registered_vehicles_by_county_04-2025.csv", 2025, "Atlanta MSA"))
+print(ev_registration("registered_vehicles_by_county_04-2025.csv", 2025, "ARC Core"))
