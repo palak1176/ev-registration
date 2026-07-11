@@ -32,7 +32,7 @@ def ev_registration(file_path, year, region):
     if region == "Atlanta MSA":
         counties = atlanta_msa_counties
     elif region == "Atlanta MPO":
-        counties = [county for county in atlanta_msa_counties if county not in ["Haralson", "Meriwether", "Bartow", "Heard", "Morgan", "Butts", "Jasper", "Lamar", "Pickens"]]
+        counties = [county for county in atlanta_msa_counties if county not in ["Haralson", "Meriwether", "Bartow", "Heard", "Morgan", "Butts", "Jasper", "Lamar", "Pickens", "Pike"]]
     elif region == "ARC Core":
         counties = [county for county in atlanta_msa_counties if county in ["Cherokee", "Cobb", "Douglas", "Fulton", "Fayette", "Clayton", "Henry", "DeKalb", "Gwinnett", "Forsyth", "Rockdale"]]
     else:
@@ -69,9 +69,9 @@ def ev_registration(file_path, year, region):
         ev_registration_df['heavy_duty_evs'] = round(ev_registration_df['ev'] * 0.0020271385, 0).astype(int)
 
     elif year == 2026:
-        ev_registration_df['light_duty_evs'] = round(ev_registration_df['ev'] * 0.9167054444, 0).astype(int)
-        ev_registration_df['medium_duty_evs'] = round(ev_registration_df['ev'] * 0.0822087793, 0).astype(int)
-        ev_registration_df['heavy_duty_evs'] = round(ev_registration_df['ev'] * 0.0010857763, 0).astype(int)
+        ev_registration_df['light_duty_evs'] = round(ev_registration_df['ev'] * 0.9133382014, 0).astype(int)
+        ev_registration_df['medium_duty_evs'] = round(ev_registration_df['ev'] * 0.0861189105, 0).astype(int)
+        ev_registration_df['heavy_duty_evs'] = round(ev_registration_df['ev'] * 0.0005428882, 0).astype(int)
 
     print(f"\nTotal light-duty EVs in {region} in {year}: {ev_registration_df['light_duty_evs'].sum():,.0f}")
     print(f"Total medium-duty EVs in {region} in {year}: {ev_registration_df['medium_duty_evs'].sum():,.0f}")
@@ -87,4 +87,4 @@ def ev_registration(file_path, year, region):
 # file_path: string, path to the CSV file containing EV registration data
 # year: integer, the year for which to calculate EV registrations (e.g., 2025)
 # region: string, the region for which to calculate EV registrations ("Atlanta MSA", "Atlanta MPO", or "ARC Core")
-print(ev_registration("registered_vehicles_by_county_04-2025.csv", 2025, "ARC Core"))
+print(ev_registration("registered_vehicles_by_county_04-2025.csv", 2025, "Atlanta MPO"))
