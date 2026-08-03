@@ -204,9 +204,9 @@ def ev_registration(past_year_file, target_year_file, year, region, ratios):
     ev_registration_df['heavy_duty_evs'] = round(
         ev_registration_df['ev'] * year_ratios['heavy_duty'], 0).astype(int)
  
-    print(f"\nTotal light-duty EVs in {region} in {year}: {ev_registration_df['light_duty_evs'].sum():,.0f}")
-    print(f"Total medium-duty EVs in {region} in {year}: {ev_registration_df['medium_duty_evs'].sum():,.0f}")
-    print(f"Total heavy-duty EVs in {region} in {year}: {ev_registration_df['heavy_duty_evs'].sum():,.0f}")
+    print(f"\nLight-duty EVs added in {region} in {year}: {ev_registration_df['light_duty_evs'].sum():,.0f}")
+    print(f"Medium-duty EVs added in {region} in {year}: {ev_registration_df['medium_duty_evs'].sum():,.0f}")
+    print(f"Heavy-duty EVs added in {region} in {year}: {ev_registration_df['heavy_duty_evs'].sum():,.0f}")
     print(f"Total EVs added in {region} in {year}: {ev_registration_df['ev'].sum():,.0f}")
     print(f"Total vehicles added in {region} in {year}: {ev_registration_df['total_vehicle'].sum():,.0f}")
  
