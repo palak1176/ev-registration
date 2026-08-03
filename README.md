@@ -1,4 +1,4 @@
-# Atlanta MSA EV Registration by Duty Class
+# EV Registration by Duty Class
 
 ## What this script does
 
