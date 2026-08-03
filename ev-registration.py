@@ -53,6 +53,26 @@ def duty_class_ratios(file_path, header_row=2):
             "heavy_duty": row["heavy_duty"] / total}
  
     return ratios
+
+def carry_ratio_backward(ratios, missing_year, source_year):
+    """
+    Fills in a year missing from the Atlas ratios by reusing another year's
+    ratio -- e.g. carry_ratio_backward(ratios, 2021, 2022) uses 2022's
+    duty-class mix as a stand-in for 2021, since Atlas's data doesn't go
+    back that far.
+ 
+    This is an ASSUMPTION (that the duty-class mix didn't change much
+    between the two years), not real data for missing_year -- document it
+    as such wherever this feeds into RTEP/MACAP tracking. Modifies and
+    returns the ratios dict in place.
+    """
+    if source_year not in ratios:
+        raise ValueError(f"Can't carry from {source_year} -- it's not in ratios either.")
+    ratios[missing_year] = dict(ratios[source_year])
+    print(
+        f"NOTE: {missing_year} duty-class ratio is copied from {source_year} "
+        f"(assumption, not real {missing_year} data).")
+    return ratios
  
  
 def flag_partial_years(file_path, header_row=2):
@@ -92,7 +112,35 @@ def _read_county_csv(file_path):
         return None  # can't safely subset if a required column is missing
  
     df['county'] = df['county'].fillna('').str.strip()  # can't title-case because of "DeKalb"
-    return df[columns_to_keep]
+    df = df[columns_to_keep]
+ 
+    # Drop the phantom statewide total row some DRIVES pulls include (blank
+    # county, total_vehicle = all of Georgia). Georgia has 159 real counties;
+    # a blank-county row is not one of them.
+    blank_rows = (df['county'] == '').sum()
+    if blank_rows:
+        print(f"Warning: {file_path} has {blank_rows} row(s) with a blank county "
+              f"(likely a statewide total row) -- dropping.")
+        df = df[df['county'] != '']
+ 
+    # Exact duplicate rows (same county, same values) are scraper artifacts --
+    # drop them, don't sum them, or counts get double/triple counted.
+    exact_dupes = df[df.duplicated(keep=False)]
+    if len(exact_dupes):
+        print(f"Warning: {file_path} has {len(exact_dupes)} exact duplicate row(s) "
+              f"for: {sorted(exact_dupes['county'].unique())}. Dropping repeats.")
+        df = df.drop_duplicates()
+ 
+    # Same county, DIFFERENT values -- this is not a scraper repeat, something
+    # else is going on (e.g. two distinct records for one county). Don't
+    # silently sum these; flag them so they can be checked by hand.
+    remaining_dupes = df.loc[df.duplicated('county', keep=False), 'county'].unique().tolist()
+    if remaining_dupes:
+        print(f"Warning: {file_path} still has multiple DIFFERING rows for: "
+              f"{remaining_dupes}. NOT auto-combined -- check the raw file.")
+ 
+    return df
+    
 
 def ev_registration(past_year_file, target_year_file, year, region, ratios):
     """
@@ -163,20 +211,197 @@ def ev_registration(past_year_file, target_year_file, year, region, ratios):
     print(f"Total vehicles added in {region} in {year}: {ev_registration_df['total_vehicle'].sum():,.0f}")
  
     save_region = region.lower().replace(" ", "_")
-    return ev_registration_df.to_csv(f"ev_registration_by_county_{save_region}_{year}.csv", index=False)
+    ev_registration_df.to_csv(f"ev_registration_by_county_{save_region}_{year}.csv", index=False)
+    return ev_registration_df
+ 
+ 
+def run_all_years(year_files, region, ratios):
+    """
+    Runs ev_registration() across every consecutive pair of years and stitches
+    the region-level totals into one DataFrame -- no need to call
+    ev_registration() by hand for each year.
+ 
+    year_files: dict mapping year -> DRIVES county CSV path, e.g.
+        {
+            2020: "registered_vehicles_by_county_04-2020.csv",
+            2021: "registered_vehicles_by_county_04-2021.csv",
+            2022: "registered_vehicles_by_county_04-2022.csv",
+            2023: "registered_vehicles_by_county_04-2023.csv",
+            2024: "registered_vehicles_by_county_04-2024.csv",
+            2025: "registered_vehicles_by_county_04-2025.csv",
+        }
+    Each consecutive pair (2020->2021, 2021->2022, ...) is diffed and has
+    that later year's Atlas ratio applied, same as calling ev_registration()
+    yourself for each pair. The first year in year_files has nothing before
+    it to diff against, so it won't appear as a row in the output -- only
+    years that have a prior-year file to compare to will.
+ 
+    Returns a DataFrame indexed by year with summed light/medium/heavy EV
+    counts, total EVs added, and total vehicles added for the region.
+    """
+    years = sorted(year_files.keys())
+    summary_rows = []
+ 
+    for past_year, target_year in zip(years[:-1], years[1:]):
+        print(f"\n=== Processing {past_year} -> {target_year} ===")
+        if target_year not in ratios:
+            print(
+                f"Skipping {target_year} -- no Atlas duty-class ratio available "
+                f"for this year (ratios cover: {sorted(ratios.keys())})."
+            )
+            continue
+        result_df = ev_registration(
+            year_files[past_year], year_files[target_year], target_year, region, ratios
+        )
+        if result_df is None:
+            print(f"Skipping {target_year} -- see error above.")
+            continue
+        summary_rows.append({
+            "year": target_year,
+            "light_duty_evs": result_df["light_duty_evs"].sum(),
+            "medium_duty_evs": result_df["medium_duty_evs"].sum(),
+            "heavy_duty_evs": result_df["heavy_duty_evs"].sum(),
+            "total_evs_added": result_df["ev"].sum(),
+            "total_vehicles_added": result_df["total_vehicle"].sum(),
+        })
+ 
+    summary_df = pd.DataFrame(summary_rows).set_index("year")
 
-# Format: ev_registration(past_year_file, target_year_file, year, region)
-# past_year_file: string, path to the CSV file containing EV registration data for the past year (eg. 2024 if looking for 2025 data)
-# target_year_file: string, path to the CSV file containing EV registration data for the target year
-# year: integer, the year for which to calculate EV registrations (e.g., 2025)
-# region: string, the region for which to calculate EV registrations ("Atlanta MSA", "Atlanta MPO", or "ARC Core")
-# print(ev_registration("registered_vehicles_by_county_04-2024.csv", "registered_vehicles_by_county_04-2025.csv", 2025, "Atlanta MPO"))
+    # % of light-duty EVs relative to ALL new vehicles added that year (every fuel type, not just EVs) 
+    # -- NOTE: DRIVES has no private-vs-fleet ownership field, so this is light-duty EVs as a
+    # share of total vehicle growth, not filtered by ownership type.
+    summary_df["pct_light_duty_of_total_added"] = (summary_df["light_duty_evs"] / summary_df["total_vehicles_added"] * 100).round(2)
 
+    print("\n=== % of light-duty EVs relative to total vehicles added, by year ===")
+    for year, row in summary_df.iterrows():
+        print(f"{year}: {row['pct_light_duty_of_total_added']:.2f}%")
+
+    summary_df.to_csv(f"ev_registration_summary_{region.lower().replace(' ', '_')}.csv")
+    return summary_df
+
+def cumulative_totals(year_files, region, ratios, summary_df=None):
+    """
+    Estimates the TOTAL number of light/medium/heavy-duty EVs currently on
+    the road in `region`, as of the MOST RECENT file in `year_files` --
+    not just the year-over-year additions run_all_years() reports.
+
+    run_all_years() only ever counts ADDITIONS between consecutive files --
+    the earliest year in year_files is never counted on its own, since it's
+    only ever used as the "past" half of the first diff. This function adds
+    that missing piece back in: it splits the earliest year's own EV count
+    into duty classes (using that year's ratio) as a baseline, then adds
+    every year-over-year addition on top of it.
+
+    Requires a ratio for the EARLIEST year in year_files -- use
+    carry_ratio_backward() first if Atlas doesn't cover it.
+
+    Pass summary_df if you already have one from run_all_years() (saves
+    re-running it); otherwise it's computed for you.
+    """
+    earliest_year = min(year_files.keys())
+    most_recent_year = max(year_files.keys())
+
+    if earliest_year not in ratios:
+        raise ValueError(
+            f"No ratio available for {earliest_year}, the earliest year in "
+            f"year_files. Use carry_ratio_backward() to fill it in first."
+        )
+
+    baseline_df = _read_county_csv(year_files[earliest_year])
+    if baseline_df is None:
+        raise ValueError(f"Could not read {year_files[earliest_year]}")
+
+    if region == "Atlanta MSA":
+        counties = atlanta_msa_counties
+    elif region == "Atlanta MPO":
+        counties = [c for c in atlanta_msa_counties if c not in
+                    ["Haralson", "Meriwether", "Bartow", "Heard", "Morgan",
+                     "Butts", "Jasper", "Lamar", "Pickens", "Pike"]]
+    elif region == "ARC Core":
+        counties = [c for c in atlanta_msa_counties if c in
+                    ["Cherokee", "Cobb", "Douglas", "Fulton", "Fayette",
+                     "Clayton", "Henry", "DeKalb", "Gwinnett", "Forsyth", "Rockdale"]]
+    else:
+        raise ValueError("region must be 'Atlanta MSA', 'Atlanta MPO', or 'ARC Core'")
+
+    counties_lower = {c.lower() for c in counties}
+    baseline_region = baseline_df[baseline_df["county"].str.lower().isin(counties_lower)]
+    baseline_ev_total = baseline_region["ev"].sum()
+
+    baseline_ratio = ratios[earliest_year]
+    baseline_light = round(baseline_ev_total * baseline_ratio["light_duty"])
+    baseline_medium = round(baseline_ev_total * baseline_ratio["medium_duty"])
+    baseline_heavy = round(baseline_ev_total * baseline_ratio["heavy_duty"])
+
+    if summary_df is None:
+        summary_df = run_all_years(year_files, region, ratios)
+
+    total_light = baseline_light + summary_df["light_duty_evs"].sum()
+    total_medium = baseline_medium + summary_df["medium_duty_evs"].sum()
+    total_heavy = baseline_heavy + summary_df["heavy_duty_evs"].sum()
+    total_all = total_light + total_medium + total_heavy
+
+    print(f"\n=== Cumulative EV stock in {region}, as of {most_recent_year} pull ===")
+    print(f"Light-duty:  {total_light:,.0f}")
+    print(f"Medium-duty: {total_medium:,.0f}")
+    print(f"Heavy-duty:  {total_heavy:,.0f}")
+    print(f"Total:       {total_all:,.0f}")
+    print(
+        f"(Baseline from {earliest_year}: light={baseline_light:,}, "
+        f"medium={baseline_medium:,}, heavy={baseline_heavy:,} -- split "
+        f"using {earliest_year}'s ratio, which is an assumption if that "
+        f"ratio was carried back from a later year via carry_ratio_backward.)")
+
+    return {
+        "light_duty": total_light,
+        "medium_duty": total_medium,
+        "heavy_duty": total_heavy,
+        "total": total_all,
+        "as_of_year": most_recent_year,}
+
+def plot_summary(summary_df, region, save_path=None):
+    """
+    Stacked bar chart of light/medium/heavy-duty EVs added per year, for the
+    summary_df returned by run_all_years().
+    """
+    import matplotlib.pyplot as plt
+ 
+    fig, ax = plt.subplots(figsize=(9, 5.5))
+    years = summary_df.index.astype(str)
+ 
+    ax.bar(years, summary_df["light_duty_evs"], label="Light-duty", color="#26428b")
+    ax.bar(years, summary_df["medium_duty_evs"], bottom=summary_df["light_duty_evs"],
+           label="Medium-duty", color="#cc0000")
+    bottom_heavy = summary_df["light_duty_evs"] + summary_df["medium_duty_evs"]
+    ax.bar(years, summary_df["heavy_duty_evs"], bottom=bottom_heavy,
+           label="Heavy-duty", color="#f1c232")
+ 
+    ax.set_title(f"EVs Added by Duty Class -- {region}")
+    ax.set_xlabel("Year")
+    ax.set_ylabel("EVs added (net change from prior year)")
+    ax.legend()
+    fig.tight_layout()
+ 
+    if save_path:
+        fig.savefig(save_path, dpi=150)
+        print(f"Saved plot to {save_path}")
+    return fig
+ 
+ 
 ratios = duty_class_ratios("EV_Sales_and_Market_Share.xlsx")
-print(flag_partial_years("EV_Sales_and_Market_Share.xlsx"))
-print(ev_registration(
-    "registered_vehicles_by_county_04-2024.csv",
-    "registered_vehicles_by_county_04-2025.csv",
-    2025,
-    "Atlanta MSA",
-    ratios))
+flag_partial_years("EV_Sales_and_Market_Share.xlsx")
+carry_ratio_backward(ratios, missing_year=2021, source_year=2022)
+carry_ratio_backward(ratios, missing_year=2020, source_year=2022) 
+
+year_files = {
+    2020: "registered_vehicles_by_county_2020.csv",
+    2021: "registered_vehicles_by_county_2021.csv",
+    2022: "registered_vehicles_by_county_2022.csv",
+    2023: "registered_vehicles_by_county_2023.csv",
+    2024: "registered_vehicles_by_county_2024.csv",
+    2025: "registered_vehicles_by_county_04-2025.csv",
+    2026: "registered_vehicles_by_county_07-2026.csv"
+}
+summary = run_all_years(year_files, "Atlanta MSA", ratios)
+plot_summary(summary, "Atlanta MSA", save_path="atlanta_msa_ev_duty_class.png")
+cumulative_totals(year_files, "Atlanta MSA", ratios)
